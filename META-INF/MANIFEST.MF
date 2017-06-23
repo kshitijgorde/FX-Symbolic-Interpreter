@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.8.2
+Created-By: 1.6.0_17-b04 (Sun Microsystems Inc.)
+Class-Path: lib/bcel-5.2.jar lib/ext-1.1.1.jar lib/jep-2.4.1.jar lib/j
+ rexx-1.1.1.jar lib/SPoXParser.jar
+Main-Class: gui.BytecodeViewer
+

@@ -1,0 +1,6 @@
+data/.hgignore.i
+data/ClassData.java.i
+data/ClassParser.java.i
+data/JarProcessor.java.i
+data/Main.java.i
+data/MethodData.java.i
