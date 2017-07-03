@@ -368,7 +368,7 @@ default_instr(pop, state([EE|EEs],CT), state( [NewEE|EEs],CT)) :-
 	NewEE = env(C, M, OS1, LVs, NewInstrHandle).
 %-------------- For branch instruction you have to take 2 branches. Condition Positive and Condition Negative
 
-branch_instr('iflt', state([EE|EEs],CT), state([PosEE|EEs],NewCT)):-
+branch_instr('iflt', state([EE|EEs],CT), state([PosEE,NegEE|EEs],NewCT)):-
 	EE = env(C, M, OS, LVs, InstrHandle),
     (OS = [O|OS1] ; (OS = [], OS1 = [])),
     jpl_call(InstrHandle,toString,[@false],IHToString),
@@ -377,7 +377,11 @@ branch_instr('iflt', state([EE|EEs],CT), state([PosEE|EEs],NewCT)):-
 	jpl_call(InstrHandle, getTarget,[],PosInstrHandle),
 	jpl_call(PosInstrHandle,toString,[],Target_String),
 	format('Target is:~w~n',[Target_String]),
-	PosEE = env(C, M, OS1, LVs, PosInstrHandle).
+	format('Positive EE added........~n'),
+	PosEE = env(C, M, OS1, LVs, PosInstrHandle),
+	jpl_call(InstrHandle, getNext,[],NegInstrHandle),
+	NegEE = env(C, M, OS1, LVs, NegInstrHandle),
+	format('Negative EE EE added........').
 
 %------------------------- Now Handle for Neg. Instruction ---------------------------------------
 branch_instr('iflt', state([EE|EEs],CT), state([NegEE|EEs],NewCT)):-
@@ -387,8 +391,9 @@ branch_instr('iflt', state([EE|EEs],CT), state([NegEE|EEs],NewCT)):-
     format('Branch on ~w~n',[IHToString]),
 	jpl_call(InstrHandle, getNext,[],NegInstrHandle),
 	jpl_call(NegInstrHandle,toString,[],NextTarget_String),
-	format('Next Target is:~w~n',[NextTarget_String]),	
-	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
+	format('Next Target is:~w~n',[NextTarget_String]).
+		
+	
 
 
 
