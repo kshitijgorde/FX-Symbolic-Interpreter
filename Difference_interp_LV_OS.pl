@@ -116,8 +116,13 @@ help_instr(invoke, state([EE|EEs],CT), state(ReturnEEs, CT)) :-
 
 %\+(cat(X)) is the same as not(cat(X))
 EE = env(C,M,OS, LVs, InstrHandle),
+
+
+
+
 jpl_call('mcparser.instr.InstructionInfo', getInvokeDataLite, [C,M,InstrHandle], InvokeData),
-	
+jpl_get(InvokeData, className, NewClassName),
+trusted_class(NewClassName),
 jpl_call(InstrHandle, getInstruction, [], Instr),
 jpl_call(Instr, getName, [], Label),
 
@@ -145,9 +150,8 @@ jpl_get('org.apache.bcel.generic.Type','VOID',VoidType),
 (RetType = VoidType -> UpdatedOS = NewOS ; UpdatedOS = [RetType|NewOS]),
 
 format('Updated OperandStack:~w~n',[UpdatedOS]),	
-jpl_get(InvokeData, className, NewClassName),
-trusted_class(NewClassName),
 format('Processing Trusted Classes for Invoke Instruction'),
+
 writeln('invoke, trusted case'),
 format('ClassName = ~w~n', NewClassName),
 format('MethodName = ~w~n', [MethodName]),
@@ -163,11 +167,10 @@ help_instr(invoke, state([EE|EEs],CT), state([NewMethodEE, ReturnEE|EEs],NewCT))
 
 %\+(cat(X)) is the same as not(cat(X))
 EE = env(C,M,OS, LVs, InstrHandle),
-jpl_call('mcparser.instr.InstructionInfo', getInvokeData, [C,M,InstrHandle], InvokeData),
-	
+jpl_call('mcparser.instr.InstructionInfo', getInvokeData, [C,M,InstrHandle], InvokeData),	
 jpl_call(InstrHandle, getInstruction, [], Instr),
 jpl_call(Instr, getName, [], Label),
-format('In untrusted: OS:~w~n',OS),
+format('In untrusted: OS:~w~n',[OS]),
 /* find out the number of arguments */
 jpl_get(InvokeData, args, ArgArray),
 jpl_array_to_list(ArgArray, ArgList),
@@ -286,6 +289,16 @@ return_instr(areturn, state([CalleeEE,CallerEE|EEs],CT), state( [NewCallerEE|EEs
 	CallerEE = env(OldC, OldM, OldOS, OldLVs, OldInstrHandle),
 %    get_next_instr(OldC,OldM,OldInstrHandle,NextInstrHandle),
 	NewCallerEE = env(OldC, OldM, [RetVar|OldOS], OldLVs, OldInstrHandle).
+
+
+return_instr(ireturn, state([CalleeEE,CallerEE|EEs],CT), state( [NewCallerEE|EEs],CT)) :-
+	CalleeEE = env(_C, _M, CalleeOS, _LVs, _InstrHandle),
+    (CalleeOS = [RetVar|_] ; CalleeOS = []),
+	CallerEE = env(OldC, OldM, OldOS, OldLVs, OldInstrHandle),
+%    get_next_instr(OldC,OldM,OldInstrHandle,NextInstrHandle),
+	NewCallerEE = env(OldC, OldM, [RetVar|OldOS], OldLVs, OldInstrHandle).
+
+
 typed_instr(aastore,state([EE|EEs],CT), state([NewEE|EEs],CT)) :-
 	format('Processing aastore........'),
 	EE = env(C,M,OS,LVs,InstrHandle),
@@ -353,6 +366,34 @@ default_instr(pop, state([EE|EEs],CT), state( [NewEE|EEs],CT)) :-
     (OS = [_O1|OS1] ; (OS = [] ; OS1 = [])),
     jpl_call(InstrHandle,getNext,[],NewInstrHandle),
 	NewEE = env(C, M, OS1, LVs, NewInstrHandle).
+%-------------- For branch instruction you have to take 2 branches. Condition Positive and Condition Negative
+
+branch_instr('iflt', state([EE|EEs],CT), state([PosEE|EEs],NewCT)):-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+%	format('True iflt branch, [O] = [~w]~n',[O]),
+	jpl_call(InstrHandle, getTarget,[],PosInstrHandle),
+	jpl_call(PosInstrHandle,toString,[],Target_String),
+	format('Target is:~w~n',[Target_String]),
+	PosEE = env(C, M, OS1, LVs, PosInstrHandle).
+
+%------------------------- Now Handle for Neg. Instruction ---------------------------------------
+branch_instr('iflt', state([EE|EEs],CT), state([NegEE|EEs],NewCT)):-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+	jpl_call(InstrHandle, getNext,[],NegInstrHandle),
+	jpl_call(NegInstrHandle,toString,[],NextTarget_String),
+	format('Next Target is:~w~n',[NextTarget_String]),	
+	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
+
+
+
+%-------------------------------------------------------------------------------------------------
+
 
 
 branch_instr('if_icmple', state([EE|EEs],CT), state([PosEE|EEs],NewCT)):-
