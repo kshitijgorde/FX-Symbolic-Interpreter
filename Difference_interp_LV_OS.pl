@@ -57,7 +57,8 @@ instr(state([EE|_EEs],CTriple), NewState) :-
 instr(state([EE|EEs],CTriple), NewState) :-
 	EE = env(C, M, OS, LVs, InstrHandle),
 	InstrHandle \== @null,
-	jpl_call(C,getClassName,[],CToString),		% returns a string with class name
+	jpl_call(C,getClassName,[],CToString),		% returns a string with class name\
+
 	jpl_call(M,getName,[],MToString),	
 	jpl_call(M,getSignature,[],MSigToString),
     atom_concat(MToString,MSigToString,MFullSig),
@@ -65,7 +66,7 @@ instr(state([EE|EEs],CTriple), NewState) :-
     atom_concat(FullMethodName1,MFullSig,FullMethodName), %FullMethodName example is:	Kshitij.<init>()V
     format('Full method name is ~w~n',FullMethodName),		
     jpl_call(InstrHandle,getPosition,[],InstrOffset),
-	jpl_call(InstrHandle, getInstruction, [], Instr),
+   	jpl_call(InstrHandle, getInstruction, [], Instr),
 	jpl_call(Instr, getName, [], Label),
 	jpl_call(Instr,toString,[],StringInstr),	
 	jpl_call('mcparser.instr.InstructionInfo', getInstrType, [InstrHandle], InstrType),
@@ -74,6 +75,7 @@ instr(state([EE|EEs],CTriple), NewState) :-
 	format('OS=~w,LVs=~w,InstrHandle=~s~n~n, Type ~w~n',[OS,LVs,IHToString,InstrType]),
     help_instr(InstrType,state([EE|EEs],CTriple),NextState),
     instr(NextState,NewState).
+    
 
 
 help_instr(default, state([EE|EEs],CT), State2) :-
@@ -94,6 +96,7 @@ help_instr(local, state([EE|EEs],CT), State2) :-
 	EE = env(_C, _M, _OS, _LVs, InstrHandle),
 	jpl_call('mcparser.instr.InstructionInfo', getInstrName, [InstrHandle], Label),
 	local_instr(Label, state([EE|EEs],CT), State2).
+	
 help_instr(branch, state([EE|EEs],CT), State2) :-
 	EE = env(_C, _M, _OS, _LVs, InstrHandle),    
 	jpl_call('mcparser.instr.InstructionInfo', getInstrName, [InstrHandle], Label),
@@ -232,11 +235,16 @@ typed_instr(iconst_5, State1, State2) :- call_constintload(State1, State2).
 typed_instr(iconst_3, State1, State2) :- call_constintload(State1, State2).
 typed_instr(iconst_2,State1, State2) :- call_constintload(State1, State2).
 typed_instr(iconst_1,State1, State2) :- call_constintload(State1, State2).
+typed_instr(iconst_m1,State1,State2) :- call_constintload(State1,State2).
+typed_instr(lconst_0,State1,State2) :- call_constlongload(State1,State2).
 typed_instr(ldc, State1, State2) :- call_constldcload(State1, State2).
+typed_instr(sipush, State1, State2) :- call_constintload(State1, State2).
+local_instr(istore,State1,State2) :- call_localstore(State1,State2).
 local_instr(istore_0, State1, State2) :- call_localstore(State1, State2).
 local_instr(istore_1, State1, State2) :- call_localstore(State1, State2).
 local_instr(istore_2, State1, State2) :- call_localstore(State1, State2).
 local_instr(istore_3, State1, State2) :- call_localstore(State1, State2).
+local_instr(lstore,State1, State2) :- call_localstore(State1, State2).
 local_instr(iload_2, State1, State2) :- call_localload(State1, State2).
 local_instr(iload_0, State1, State2) :- call_localload(State1, State2).
 local_instr(iload_3, State1, State2) :- call_localload(State1, State2).
@@ -351,7 +359,13 @@ typed_instr(isub, state([EE|EEs],CT), state( [NewEE|EEs],CT)) :-
     jpl_call(InstrHandle,getNext,[],NewInstrHandle),
 	NewEE = env(C, M, [Result|OS1], LVs, NewInstrHandle).
 
-
+default_instr(newarray, state([EE|EEs],CT), state( [NewEE|EEs],CT)) :-
+    % Currently we don't really reason about arrays...
+	format('Processing newarray Instruction~n'),
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_ArrayLength|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+	NewEE = env(C, M, ['array_primitive'|OS1], LVs, NewInstrHandle).
 default_instr(dup, state([EE|EEs],CT), state( [NewEE|EEs],CT)) :-
 	%Duplicates the value on top of the stack....
 	format('Processing dup instruction..'),
@@ -441,6 +455,16 @@ Result1 = O2 - O1,
 ((number(O1),number(O2)) -> Result is Result1 ; Result = Result1),
 jpl_call(InstrHandle,getNext,[],NewInstrHandle),
 NewEE = env(C, M, [Result|OS1], LVs, NewInstrHandle).
+
+
+call_constlongload(state([EE|EEs],CT), state([NewEE|EEs],CT)) :-
+	EE = env(C, M, OS, LVs, InstrHandle),
+	jpl_call(InstrHandle, getInstruction, [], Instr),
+	jpl_call(Instr, getValue, [], Value),
+	jpl_call(Value, longValue, [], LongValue),
+	NewOS = [LongValue|OS],
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+	NewEE = env(C, M, NewOS, LVs, NewInstrHandle).
 
 
 call_constldcload(state([EE|EEs],CT), state([NewEE|EEs],CT)) :-
@@ -567,6 +591,5 @@ call_localstore(state([EE|EEs],CT), state([NewEE|EEs],CT)) :-
 	format('In localstore OS:~w~n Index:~w~n NewLVs:~w~n',[OS,Index,NewLVs]),
     jpl_call(InstrHandle,getNext,[],NewInstrHandle),
 	NewEE = env(C, M, OS1, NewLVs, NewInstrHandle).
-
 increment(X, X1):-
 	X1 is X+1.
