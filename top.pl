@@ -7,7 +7,7 @@
 :- ['utility'].
 
 set_breakpoints :- 
-	spy(process_classes).
+	spy(help_instr).
 
 jar_to_load('c:/Users/kshit/Desktop/7.jar').
 fxp(JarProcessor) :-
