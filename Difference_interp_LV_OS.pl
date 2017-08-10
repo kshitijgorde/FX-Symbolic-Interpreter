@@ -16,7 +16,7 @@ process_classes([C|CList]) :-
 	writeln([First,MGen1,MGen2|MGenList]),
 	
 	write(Out,'\n\n'),
-	jpl_call(MGen1,getMethod,[],Method1),	%MethodGen is not the same as Method (Both are differnce data structures)	..this will be public void init...
+	jpl_call(MGen2,getMethod,[],Method1),	%MethodGen is not the same as Method (Both are differnce data structures)	..this will be public void init...
 	jpl_call(Method1,getName,[],Naam1),
 	jpl_call(Method1,getSignature,[],Sig1),
 	atom_concat(Naam1,Sig1,Trial1),
@@ -28,14 +28,14 @@ process_classes([C|CList]) :-
 	%jpl_call(Method2,getSignature,[],Sig),
 	%atom_concat(Naam,Sig,Trial),
 	%format('MethodGen2 ~s~n~n',[Trial]),
-	jpl_call(MGen1,getInstructionList,[],MIList),
+	jpl_call(MGen2,getInstructionList,[],MIList),
 	jpl_call(MIList,toString,[],String_MIList),
 	format(Out,'The Instruction List is: ~w~n',String_MIList),
 	%jpl_call(av,c),
 	jpl_call(MIList,getInstructionHandles,[],IHArray),
 	jpl_array_to_list(IHArray,[IH|InstructionHandleList]),
 	
-	jpl_call(MGen1,getLocalVariables,[],LVArray),	%LVArray is a LocalVariableGen[] from bcel library
+	jpl_call(MGen2,getLocalVariables,[],LVArray),	%LVArray is a LocalVariableGen[] from bcel library
    	%format('LocalVariable Gen is ~w~n',LVArray),
     jpl_array_to_list(LVArray, LVList),
     list_to_indexed_assoc(LVList, LocalVars),
@@ -45,7 +45,7 @@ process_classes([C|CList]) :-
     %jpl_array_to_list(MLVArray, MLVList),
     %list_to_indexed_assoc(MLVList, MLocalVars),
 	%write(MLocalVars),
-	S = state([env(CGen,MGen1,OperandStack,LocalVars,IH)],[]),	%The first instruction handle will give you the next one. Hence only the first required
+	S = state([env(CGen,MGen2,OperandStack,LocalVars,IH)],[]),	%The first instruction handle will give you the next one. Hence only the first required
 	instr(S,Out,NewState).
 	%process_methods_in_class(MGenList).
 	%process_classes(CList).
@@ -54,7 +54,7 @@ instr(state([EE|_EEs],CTriple),Out, NewState) :-
     % Stop if we're at a null instruction handle
 	EE = env(_C, _M, _OS, _LVs, InstrHandle),
 	InstrHandle == @null,
-	write(Out,'Yesssssssssssssssssss!'),
+	write(Out,'~nExecution complete.'),
 	NewState = state([],CTriple).
 instr(state([EE|EEs],CTriple),Out, NewState) :-
 	EE = env(C, M, OS, LVs, InstrHandle),
@@ -102,6 +102,7 @@ help_instr(local, state([EE|EEs],CT),Out, State2) :-
 help_instr(branch, state([EE|EEs],CT),Out, State2) :-
 	EE = env(_C, _M, _OS, _LVs, InstrHandle),    
 	jpl_call('mcparser.instr.InstructionInfo', getInstrName, [InstrHandle], Label),
+	format(Out,'Label is:~w~n',[Label]),
     branch_instr(Label, state([EE|EEs],CT),Out, State2).
 help_instr(return, state([EE|EEs],CT),Out, State2) :-
 	EE = env(_C, _M, _OS, _LVs, InstrHandle),    
@@ -121,10 +122,6 @@ help_instr(invoke, state([EE|EEs],CT),Out, state(ReturnEEs, CT)) :-
 
 %\+(cat(X)) is the same as not(cat(X))
 EE = env(C,M,OS, LVs, InstrHandle),
-
-
-
-
 jpl_call('mcparser.instr.InstructionInfo', getInvokeDataLite, [C,M,InstrHandle], InvokeData),
 jpl_get(InvokeData, className, NewClassName),
 trusted_class(NewClassName),
@@ -175,8 +172,7 @@ EE = env(C,M,OS, LVs, InstrHandle),
 jpl_call('mcparser.instr.InstructionInfo', getInvokeData, [C,M,InstrHandle], InvokeData),	
 jpl_call(InstrHandle, getInstruction, [], Instr),
 jpl_call(Instr, getName, [], Label),
-format(Out,'In untrusted: OS:~w~n',[OS]),
-/* find out the number of arguments */
+
 jpl_get(InvokeData, args, ArgArray),
 jpl_array_to_list(ArgArray, ArgList),
 length(ArgList, ArgListLength),
@@ -194,10 +190,11 @@ length(OS,OSLength),
         
 jpl_get(InvokeData, retType, RetType),
 jpl_get(InvokeData, methodName, MethodName),
-%NOneed to update OS here in untrusted classes.
+
 	
 jpl_get(InvokeData, className, NewClassName),
 \+trusted_class(NewClassName),
+format(Out,'In untrusted: OS:~w~n',[OS]),
 write(Out,'Processing UnTrusted Classes for Invoke Instruction'),
 format(Out,'ClassName = ~w~n', NewClassName),
 format(Out,'MethodName = ~w~n', [MethodName]),
@@ -271,6 +268,21 @@ local_instr(astore, State1,Out, State2) :- call_localstore(State1,Out, State2).
 get_instr(getstatic, State1,Out, State2) :- call_getstatic(State1,Out, State2).
 get_instr(getfield, State1,Out, State2) :- call_getfield(State1,Out, State2).
 put_instr(putfield, State1,Out, State2) :- call_putfield(State1,Out, State2).
+
+
+local_instr(iinc,state([EE|EEs],CT),Out,state([NewEE|EEs],CT)) :-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    jpl_call(InstrHandle,getInstruction,[],Instr),
+    jpl_call(Instr,getIncrement,[],Increment),
+    jpl_call(Instr,getIndex,[],Index),
+    get_assoc(Index,LVs,Value),
+    write(Out,'iinc Processed...~n'),
+    put_assoc(Index,LVs,(Value+Increment),NewLVs),
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+    NewEE = env(C, M, OS, NewLVs, NewInstrHandle).
+
+
+
 % In case of normal returns, simply pop the callee execution env
 return_instr(return, state([_CalleeEE,CallerEE|EEs],CT),Out, state([NewCallerEE|EEs],CT)) :-
 	write(Out,'coming to first return case'),
@@ -358,6 +370,15 @@ typed_instr(aconst_null, state([EE|EEs],CT),Out, state([NewEE|EEs],CT)) :-
 	format(Out,'In aconst_null, NewEE is :NewOS=~w , NextInstrHandle = ~w',[NewOS,NextInstrHandle]).
 
 
+typed_instr(iastore,state([EE|EEs],CT),Out,state([NewEE|EEs],CT)) :-
+    % Currently we don't really reason about arrays...
+    EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_Int,_Index,_Value|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle, getNext,[],NewInstrHandle),
+	NewEE = env(C, M, OS1, LVs, NewInstrHandle),
+	write(Out,'iastore instruction Processed~n').
+
+
 typed_instr(anewarray,state([EE|EEs],CT),Out, state([NewEE,EEs],CT)) :-
 	EE = env(C,M,OS,LVs,InstrHandle),
 	OS = [OS1|RemOS],
@@ -442,8 +463,7 @@ branch_instr('iflt', state([EE|EEs],CT), Out,state([PosEE,NegEE|EEs],NewCT)):-
 
 
 %------------ Kshitij G. Edited for Branch
-branch_instr('if_icmple', state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)):-
-	writeln('true'),
+branch_instr(if_icmple, state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)):-
 	EE = env(C, M, OS, LVs, InstrHandle),
     (OS = [O1,O2|OS1] ; (OS = [], OS1 = [])),
     jpl_call(InstrHandle,toString,[@false],IHToString),
@@ -466,7 +486,7 @@ branch_instr('if_icmple', state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)
 
 
 %------------ Kshitij G. Edited for Branch
-branch_instr('ifnull', state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)) :-
+branch_instr(ifnull, state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)) :-
 	EE = env(C, M, OS, LVs, InstrHandle),
     (OS = [O1|OS1] ; (OS = [], OS1 = [])),
     jpl_call(InstrHandle,toString,[@false],IHToString),
@@ -482,19 +502,59 @@ branch_instr('ifnull', state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)) :
 	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
 
     
+%------------ ifge------------------------------------
+
+branch_instr(ifge, state([EE|EEs],CT), Out, state([PosEE,NegEE|EEs],NewCT)):-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+    jpl_call(InstrHandle,toString,[],String_InstrHandle),
+    format(Out,'String of InstrHandle is:~n~w',[String_InstrHandle]),
+    jpl_call(InstrHandle,getTarget,[],PosInstrHandle),
+    write(Out,'Positive Instruction Handle for ifge added~n..'),
+	PosEE = env(C, M, OS1, LVs, PosInstrHandle),
+	(OS = [O|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+    jpl_call(InstrHandle,getNext,[],NegInstrHandle),
+    write(Out,'Negative Instruction handle for ifge added~n'),
+	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
 
 
 
-branch_instr('goto', state([EE|EEs],CT), Out,state([NewEE|EEs],CT)) :-
+branch_instr(goto, state([EE|EEs],CT), Out,state([NewEE|EEs],CT)) :-
 	EE = env(C, M, OS, LVs, InstrHandle),
     jpl_call(InstrHandle, getTarget, [], BranchInstrHandle),
-	(BranchInstrHandle \== @null ->
+		
+    (BranchInstrHandle \== @null ->
         jpl_call(BranchInstrHandle,getPosition,[],Offset),
-        format(Out,'Goto offset ~w~n',[Offset]) ; true),
-	NewEE = env(C, M, [], LVs, BranchInstrHandle).
+        format('Goto offset ~w~n',[Offset]) ; true),
+    
+    jpl_call(InstrHandle,getPosition,[],PositionInstrHandle),
+    format(Out,'Next Instr Handle is:~w~n',[StringInstrHandle]),
+    (Offset < PositionInstrHandle -> write(Out,'Analysis complete!..'),write('Analysis complete...'),fail;true),
+
+	NewEE = env(C, M, OS, LVs, BranchInstrHandle).
+
+
+
+	%% (BranchInstrHandle \== @null ->
+	%% 	jpl_call(InstrHandle,getPosition,[],PositionInstrHandle),
+	%% 	jpl_call(InstrHandle,getNext,[],NextInstrHandle),
+	%% 	format(Out,'Position of Instruction Handle is:~w~n',[PositionInstrHandle]),
+ %%        jpl_call(BranchInstrHandle,getPosition,[],Offset),
+ %%        format(Out,'Goto Offset is:~w~n',[Offset]),
+ %%        atom_number(PositionInstrHandle,Int_PIH)
+ %%        ((Offset > Int_PIH) -> format(Out,'Valid Goto Statement. Forward Jump~n'),
+ %%        	format(Out,'Goto offset ~w~n',[Offset]),NewEE = env(C, M, [], LVs, BranchInstrHandle) ;
+ %%        	write('Invalid goto~n'),format(Out,'Invalid Goto Statement...Not processing.~n'),
+ %%        	NewEE = env(C, M, OS, LVs, NextInstrHandle)); true).
+      
+	
 
 %------------ Kshitij G. Edited for Branch
-branch_instr('if_icmpeq', state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)):-
+branch_instr(if_icmpeq, state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)):-
 	EE = env(C, M, OS, LVs, InstrHandle),
     (OS = [O1,O2|OS1] ; (OS = [], OS1 = [])),
     jpl_call(InstrHandle,toString,[@false],IHToString),

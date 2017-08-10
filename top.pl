@@ -9,7 +9,7 @@
 set_breakpoints :- 
 	spy(help_instr).
 
-jar_to_load('c:/Users/kshit/Desktop/7.jar').
+jar_to_load('c:/Users/kshit/Desktop/BranchInstruction.jar').
 fxp(JarProcessor) :-
 	%write(X),
 	%write("Hello"),
