@@ -486,6 +486,56 @@ branch_instr(if_icmple, state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)):
 	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
 	
 
+%----------- if_acmpne ------------------------------
+branch_instr('if_acmpne', state([EE|EEs],CT), Out, state([PosEE,NegEE|EEs],NewCT)):-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_O1,_O2|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    jpl_call(InstrHandle,getTarget,[],NextHandle),
+	jpl_call(NextHandle,getInstruction,[],NextInstr),
+	jpl_call(NextInstr,getName,[],NextName),
+    format(Out,'Branch on ~w~n',[IHToString]),
+    writeln(Out,'True if_acmpne branch'),
+    write(Out,'For if_acmpne Ive added the Positive Execution Environment'),
+	write(NextName),
+    PosEE = env(C, M, OS1, LVs, NextHandle),
+    EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_O1,_O2|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format(Out,'Branch on ~w~n',[IHToString]),
+	writeln(Out,'False if_acmpne branch'),	
+	jpl_call(InstrHandle, getNext, [], NegInstrHandle),
+	write(Out,'For if_acmpne Ive added the Negative Execution Environment'),
+	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
+	
+
+
+
+branch_instr('if_acmpne', state([EE|EEs],CT), state([NegEE|EEs],NewCT)):-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_O1,_O2|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+%	format('False if_acmpne branch, [O1,O2] = [~w,~w]~n',[O1,O2]),
+	CT = (CAssoc,CCW,VarPairs),
+	unpack_sync(CCW, VarPairs, CW),
+    FW=CW,
+%    update_worldlist((O1=\=O2),CW,FW),
+	pack_sync(FW,VarPairs,CFW),
+	NewCT = (CAssoc,CFW,VarPairs),
+	check_all_constraints(FW),
+    get_next_instr(C,M,InstrHandle,false,NegInstrHandle),
+%	jpl_call(InstrHandle, getNext, [], NegInstrHandle),
+	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
+
+
+
+
+% -------------------------------------------------------
+
+
+
+
 
 %------------ Kshitij G. Edited for Branch
 branch_instr(ifnull, state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)) :-

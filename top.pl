@@ -9,7 +9,7 @@
 set_breakpoints :- 
 	spy(help_instr).
 
-jar_to_load('c:/Users/kshit/Desktop/BranchInstructionMF.jar').
+jar_to_load('c:/Users/kshit/Desktop/SyntheticKeylogger.jar').
 fxp(JarProcessor) :-
 	%write(X),
 	%write("Hello"),
