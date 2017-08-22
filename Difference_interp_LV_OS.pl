@@ -12,11 +12,13 @@ process_classes([C|CList]) :-
     %arraylist_to_list(MArrayList,MList),
 	jpl_call('mcparser.ClassParser',createMethodGenArray,[CGen],CMethodGenArray), %returns method array which returns all methods in the given CGen.
 	format(Out,'The MethodGenArray retrieved is: ~w~n',CMethodGenArray),
-	jpl_array_to_list(CMethodGenArray,[First,MGen1,MGen2|MGenList]),
-	writeln([First,MGen1,MGen2|MGenList]),
+	jpl_get(CMethodGenArray,length,MethodGenLength),
+	format(Out,'Length of MethodGenArray is ',[MethodGenLength]),
+	jpl_array_to_list(CMethodGenArray,[First,MGen1|MGenList]),
+	writeln([First,MGen1|MGenList]),
 	
 	write(Out,'\n\n'),
-	jpl_call(MGen2,getMethod,[],Method1),	%MethodGen is not the same as Method (Both are differnce data structures)	..this will be public void init...
+	jpl_call(MGen1,getMethod,[],Method1),	%MethodGen is not the same as Method (Both are differnce data structures)	..this will be public void init...
 	jpl_call(Method1,getName,[],Naam1),
 	jpl_call(Method1,getSignature,[],Sig1),
 	atom_concat(Naam1,Sig1,Trial1),
@@ -28,14 +30,14 @@ process_classes([C|CList]) :-
 	%jpl_call(Method2,getSignature,[],Sig),
 	%atom_concat(Naam,Sig,Trial),
 	%format('MethodGen2 ~s~n~n',[Trial]),
-	jpl_call(MGen2,getInstructionList,[],MIList),
+	jpl_call(MGen1,getInstructionList,[],MIList),
 	jpl_call(MIList,toString,[],String_MIList),
 	format(Out,'The Instruction List is: ~w~n',String_MIList),
 	%jpl_call(av,c),
 	jpl_call(MIList,getInstructionHandles,[],IHArray),
 	jpl_array_to_list(IHArray,[IH|InstructionHandleList]),
 	
-	jpl_call(MGen2,getLocalVariables,[],LVArray),	%LVArray is a LocalVariableGen[] from bcel library
+	jpl_call(MGen1,getLocalVariables,[],LVArray),	%LVArray is a LocalVariableGen[] from bcel library
    	%format('LocalVariable Gen is ~w~n',LVArray),
     jpl_array_to_list(LVArray, LVList),
     list_to_indexed_assoc(LVList, LocalVars),
@@ -45,7 +47,7 @@ process_classes([C|CList]) :-
     %jpl_array_to_list(MLVArray, MLVList),
     %list_to_indexed_assoc(MLVList, MLocalVars),
 	%write(MLocalVars),
-	S = state([env(CGen,MGen2,OperandStack,LocalVars,IH)],[]),	%The first instruction handle will give you the next one. Hence only the first required
+	S = state([env(CGen,MGen1,OperandStack,LocalVars,IH)],[]),	%The first instruction handle will give you the next one. Hence only the first required
 	instr(S,Out,NewState).
 	%process_methods_in_class(MGenList).
 	%process_classes(CList).
