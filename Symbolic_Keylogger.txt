@@ -1,0 +1,148 @@
+The ClassGen is: @J#00000000000441637460
+The MethodGenArray retrieved is: @J#00000000000441636336
+Length of MethodGenArray is 
+
+Method name:main
+Its signature is:([Ljava/lang/String;)V
+MethodGen1 main([Ljava/lang/String;)V
+The Instruction List is:    0: new[187](3) 18
+   3: dup[89](1)
+   4: new[187](3) 20
+   7: dup[89](1)
+   8: ldc[18](2) 22
+  10: invokespecial[183](3) 24
+  13: invokespecial[183](3) 27
+  16: invokestatic[184](3) 30
+  19: goto[167](3) -> 27
+  22: astore_1[76](1)
+  23: aload_1[43](1)
+  24: invokevirtual[182](3) 36
+  27: invokestatic[184](3) 41
+  30: goto[167](3) -> 38
+  33: astore_1[76](1)
+  34: aload_1[43](1)
+  35: invokevirtual[182](3) 46
+  38: new[187](3) 1
+  41: dup[89](1)
+  42: invokespecial[183](3) 49
+  45: invokestatic[184](3) 50
+  48: return[177](1)
+
+Local Variables:t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t))
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=   0: new 18
+
+, Type typed
+The Type retrieved is: java.io.PrintStream
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(java.io.PrintStream)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=   3: dup
+
+, Type default
+Processing dup instruction..Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(java.io.PrintStream),classname(java.io.PrintStream)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=   4: new 20
+
+, Type typed
+The Type retrieved is: java.io.File
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(java.io.File),classname(java.io.PrintStream),classname(java.io.PrintStream)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=   7: dup
+
+, Type default
+Processing dup instruction..Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(java.io.File),classname(java.io.File),classname(java.io.PrintStream),classname(java.io.PrintStream)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=   8: ldc 22
+
+, Type typed
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[kshitijLogs.txt,classname(java.io.File),classname(java.io.File),classname(java.io.PrintStream),classname(java.io.PrintStream)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  10: invokespecial 24
+
+, Type invoke
+Updated OperandStack:[classname(java.io.File),classname(java.io.PrintStream),classname(java.io.PrintStream)]
+Processing Trusted Classes for Invoke Instructioninvoke, trusted caseClassName = java.io.File
+MethodName = <init>
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(java.io.File),classname(java.io.PrintStream),classname(java.io.PrintStream)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  13: invokespecial 27
+
+, Type invoke
+Updated OperandStack:[classname(java.io.PrintStream)]
+Processing Trusted Classes for Invoke Instructioninvoke, trusted caseClassName = java.io.PrintStream
+MethodName = <init>
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(java.io.PrintStream)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  16: invokestatic 30
+
+, Type invoke
+Updated OperandStack:[]
+Processing Trusted Classes for Invoke Instructioninvoke, trusted caseClassName = java.lang.System
+MethodName = setOut
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  19: goto -> 27
+
+, Type branch
+Label is:goto
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  27: invokestatic 41
+
+, Type invoke
+Updated OperandStack:[]
+Processing Trusted Classes for Invoke Instructioninvoke, trusted caseClassName = org.jnativehook.GlobalScreen
+MethodName = registerNativeHook
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  30: goto -> 38
+
+, Type branch
+Label is:goto
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  38: new 1
+
+, Type typed
+The Type retrieved is: Main
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(Main)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  41: dup
+
+, Type default
+Processing dup instruction..Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(Main),classname(Main)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  42: invokespecial 49
+
+, Type invoke
+In untrusted: OS:[classname(Main),classname(Main)]
+Processing UnTrusted Classes for Invoke InstructionClassName = Main
+MethodName = <init>
+Next Instruction is:  45: invokestatic[184](3) 50
+The Instruction List is:    0: aload_0[42](1)
+   1: invokespecial[183](3) 10
+   4: return[177](1)
+
+Added new Untrusted Method to the list of Execution Environments.Full method name is Main.<init>()V
+OS=[],LVs=t(0,@J#00000000000469950676,-,t,t),InstrHandle=   0: aload_0
+
+, Type local
+in localload, Index is 0
+Value is @J#00000000000469950676
+, LVs is t(0,@J#00000000000469950676,-,t,t)
+, NewOS is [@J#00000000000469950676]
+Full method name is Main.<init>()V
+OS=[@J#00000000000469950676],LVs=t(0,@J#00000000000469950676,-,t,t),InstrHandle=   1: invokespecial 10
+
+, Type invoke
+Updated OperandStack:[]
+Processing Trusted Classes for Invoke Instructioninvoke, trusted caseClassName = java.lang.Object
+MethodName = <init>
+Full method name is Main.<init>()V
+OS=[],LVs=t(0,@J#00000000000469950676,-,t,t),InstrHandle=   4: return
+
+, Type return
+Label from return help_instr:return
+coming to first return caseOld C is org.apache.bcel.generic.ClassGen@2479d9
+Old M is public static void main(String[] args)
+Old Instr Handle is   45: invokestatic[184](3) 50
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[classname(Main)],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  45: invokestatic 50
+
+, Type invoke
+Updated OperandStack:[]
+Processing Trusted Classes for Invoke Instructioninvoke, trusted caseClassName = org.jnativehook.GlobalScreen
+MethodName = addNativeKeyListener
+Full method name is Main.main([Ljava/lang/String;)V
+OS=[],LVs=t(1,@J#00000000000441639288,-,t(0,@J#00000000000441639284,-,t,t),t(2,@J#00000000000441639292,-,t,t)),InstrHandle=  48: return
+
+, Type return
+Label from return help_instr:return
+bottom-level return~nExecution complete.

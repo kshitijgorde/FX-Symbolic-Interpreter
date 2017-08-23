@@ -1,3 +1,6 @@
+trusted_class('org.jnativehook.GlobalScreen').
+
+
 trusted_class('com.sun.accessibility.internal.resources.accessibility').
 trusted_class('com.sun.accessibility.internal.resources.accessibility_de').
 trusted_class('com.sun.accessibility.internal.resources.accessibility_en').

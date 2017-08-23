@@ -4,7 +4,7 @@
 :- use_module(library(assoc)).
 
 process_classes([]).
-process_classes([C|CList]) :-
+process_classes([C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14,C15,C16,C17,C18,C19,C20,C21,C22,C23,C24,C25,C26,C27,C28,C29,C30,C31,C32,C|CList]) :-	
 	jpl_call('mcparser.instr.InstructionInfo',getClassGen,[C],CGen),		%Cgen is a datastructure from bcel that holds class related info.
 	open('Symbolic.txt',write,Out),
 	format(Out,'The ClassGen is: ~w~n',CGen),
@@ -199,8 +199,10 @@ jpl_get(InvokeData, className, NewClassName),
 format(Out,'In untrusted: OS:~w~n',[OS]),
 write(Out,'Processing UnTrusted Classes for Invoke Instruction'),
 format(Out,'ClassName = ~w~n', NewClassName),
-format(Out,'MethodName = ~w~n', [MethodName]),
+format(Out,'MethodName = ~w~n', MethodName),
 jpl_call(InstrHandle,getNext,[],NextInstructionHandle),
+jpl_call(NextInstructionHandle,toString,[],String_InstrHandleNext),
+format(Out,'Next Instruction is:~w~n',String_InstrHandleNext),
 ReturnEE = env(C,M,NewOS,LVs,NextInstructionHandle),
 
 %To populate a NewMethodEE, get new LocalVars, convert to prolog list, and index assoc.
@@ -577,14 +579,15 @@ branch_instr(ifge, state([EE|EEs],CT), Out, state([PosEE,NegEE|EEs],NewCT)):-
 
 branch_instr(goto, state([EE|EEs],CT), Out,state([NewEE|EEs],CT)) :-
 	EE = env(C, M, OS, LVs, InstrHandle),
-    jpl_call(InstrHandle, getTarget, [], BranchInstrHandle),
-		
+    %jpl_call(InstrHandle, getTarget, [], BranchInstrHandle),
+    jpl_call('mcparser.instr.InstructionInfo', getBranchTarget, [InstrHandle], BranchInstrHandle),
     (BranchInstrHandle \== @null ->
         jpl_call(BranchInstrHandle,getPosition,[],Offset),
+        format('Offset is:',[Offset]),
         format('Goto offset ~w~n',[Offset]) ; true),
     
     jpl_call(InstrHandle,getPosition,[],PositionInstrHandle),
-    format(Out,'Next Instr Handle is:~w~n',[StringInstrHandle]),
+    %format(Out,'Next Instr Handle is:~w~n',[PositionInstrHandle]),
     (Offset < PositionInstrHandle -> write(Out,'Analysis complete!..'),write('Analysis complete...'),fail;true),
 
 	NewEE = env(C, M, OS, LVs, BranchInstrHandle).
