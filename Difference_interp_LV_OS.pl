@@ -4,7 +4,7 @@
 :- use_module(library(assoc)).
 
 process_classes([]).
-process_classes([C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14,C15,C16,C17,C18,C19,C20,C21,C22,C23,C24,C25,C26,C27,C28,C29,C30,C31,C32,C|CList]) :-	
+process_classes([C|CList]) :-	
 	jpl_call('mcparser.instr.InstructionInfo',getClassGen,[C],CGen),		%Cgen is a datastructure from bcel that holds class related info.
 	open('Symbolic.txt',write,Out),
 	format(Out,'The ClassGen is: ~w~n',CGen),
@@ -12,8 +12,6 @@ process_classes([C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14,C15,C16,C17,C18,
     %arraylist_to_list(MArrayList,MList),
 	jpl_call('mcparser.ClassParser',createMethodGenArray,[CGen],CMethodGenArray), %returns method array which returns all methods in the given CGen.
 	format(Out,'The MethodGenArray retrieved is: ~w~n',CMethodGenArray),
-	jpl_get(CMethodGenArray,length,MethodGenLength),
-	format(Out,'Length of MethodGenArray is ',[MethodGenLength]),
 	jpl_array_to_list(CMethodGenArray,[First,MGen1|MGenList]),
 	writeln([First,MGen1|MGenList]),
 	
@@ -418,6 +416,14 @@ typed_instr(isub, state([EE|EEs],CT),Out, state( [NewEE|EEs],CT)) :-
     jpl_call(InstrHandle,getNext,[],NewInstrHandle),
 	NewEE = env(C, M, [Result|OS1], LVs, NewInstrHandle).
 
+
+default_instr(arraylength, state([EE|EEs],CT), Out,state( [NewEE|EEs],CT)) :-
+    % Currently we don't really reason about arrays...
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_Array|OS1] ; (OS = [],OS1 = [])),
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+	NewEE = env(C, M, [_ArrayLength|OS1], LVs, NewInstrHandle).
+
 default_instr(newarray, state([EE|EEs],CT),Out, state( [NewEE|EEs],CT)) :-
     % Currently we don't really reason about arrays...
 	write(Out,'Processing newarray Instruction~n'),
@@ -456,11 +462,26 @@ branch_instr('iflt', state([EE|EEs],CT), Out,state([PosEE,NegEE|EEs],NewCT)):-
 	jpl_call(InstrHandle, getNext,[],NegInstrHandle),
 	NegEE = env(C, M, OS1, LVs, NegInstrHandle),
 	write(Out,'Negative EE EE added........').
-
-
 		
 	
-
+branch_instr('ifnonnull', state([EE|EEs],CT), Out,state([PosEE,NegEE|EEs],NewCT)) :-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O1|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+    jpl_call(InstrHandle, getTarget,[],PosInstrHandle),
+	jpl_call(PosInstrHandle,toString,[],Target_String),
+	format(Out,'Target is:~w~n',[Target_String]),
+	write(Out,'Positive EE added........~n'),
+	PosEE = env(C, M, OS1, LVs, PosInstrHandle),
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O1|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+	jpl_call(InstrHandle, getNext,[],NegInstrHandle),
+	write(Out,'Negative EE EE added........'),
+	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
+	
 
 
 %-------------------------------------------------------------------------------------------------
@@ -588,9 +609,10 @@ branch_instr(goto, state([EE|EEs],CT), Out,state([NewEE|EEs],CT)) :-
     
     jpl_call(InstrHandle,getPosition,[],PositionInstrHandle),
     %format(Out,'Next Instr Handle is:~w~n',[PositionInstrHandle]),
-    (Offset < PositionInstrHandle -> write(Out,'Analysis complete!..'),write('Analysis complete...'),fail;true),
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+    (Offset < PositionInstrHandle -> write(Out,'Skipping back looping!..'),write('Skipping back loop...'),NewEE = env(C, M, OS, LVs, NewInstrHandle);NewEE = env(C, M, OS, LVs, BranchInstrHandle)).
 
-	NewEE = env(C, M, OS, LVs, BranchInstrHandle).
+	
 
 
 
