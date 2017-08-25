@@ -4,7 +4,7 @@
 :- use_module(library(assoc)).
 
 process_classes([]).
-process_classes([C|CList]) :-	
+process_classes([C2,C|CList]) :-	
 	jpl_call('mcparser.instr.InstructionInfo',getClassGen,[C],CGen),		%Cgen is a datastructure from bcel that holds class related info.
 	open('Symbolic.txt',write,Out),
 	format(Out,'The ClassGen is: ~w~n',CGen),
@@ -237,6 +237,7 @@ typed_instr(iconst_5, State1,Out, State2) :- call_constintload(State1, Out,State
 typed_instr(iconst_3, State1,Out, State2) :- call_constintload(State1,Out, State2).
 typed_instr(iconst_2,State1,Out, State2) :- call_constintload(State1,Out, State2).
 typed_instr(iconst_1,State1,Out, State2) :- call_constintload(State1,Out, State2).
+typed_instr(iconst_4, State1,Out, State2) :- call_constintload(State1,Out, State2).
 typed_instr(iconst_m1,State1,Out,State2) :- call_constintload(State1,Out,State2).
 typed_instr(lconst_0,State1,Out,State2) :- call_constlongload(State1,Out,State2).
 typed_instr(ldc, State1,Out, State2) :- call_constldcload(State1, Out,State2).
@@ -270,7 +271,7 @@ local_instr(astore, State1,Out, State2) :- call_localstore(State1,Out, State2).
 get_instr(getstatic, State1,Out, State2) :- call_getstatic(State1,Out, State2).
 get_instr(getfield, State1,Out, State2) :- call_getfield(State1,Out, State2).
 put_instr(putfield, State1,Out, State2) :- call_putfield(State1,Out, State2).
-
+typed_instr(bipush, State1,Out, State2) :- call_constintload(State1,Out,State2).
 
 local_instr(iinc,state([EE|EEs],CT),Out,state([NewEE|EEs],CT)) :-
 	EE = env(C, M, OS, LVs, InstrHandle),
@@ -330,13 +331,33 @@ return_instr(ireturn, state([CalleeEE,CallerEE|EEs],CT), Out,state( [NewCallerEE
 	NewCallerEE = env(OldC, OldM, [RetVar|OldOS], OldLVs, OldInstrHandle).
 
 
+
+
+
+typed_instr(bastore,state([EE|EEs],CT),Out,state([NewEE|EEs],CT)) :-
+    % Currently we don't really reason about arrays...
+    EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_ByteOrBoolean,_Index,_Value|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+	NewEE = env(C, M, OS1, LVs, NewInstrHandle).
+
 typed_instr(aastore,state([EE|EEs],CT),Out, state([NewEE|EEs],CT)) :-
 	write(Out,'Processing aastore........'),
 	EE = env(C,M,OS,LVs,InstrHandle),
 	jpl_call(InstrHandle,getNext,[],NextInstrHandle),
 	NewEE = env(C,M,OS,LVs,NextInstrHandle).
 
+typed_instr(ishl, state([EE|EEs],CT),Out, state( [NewEE|EEs],CT)) :-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [_O1,_O2|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+	NewEE = env(C, M, [_Result|OS1], LVs, NewInstrHandle).
 
+
+typed_instr(i2b, state([EE|EEs],CT),Out, state( [NewEE|EEs],CT)) :-
+	EE = env(C, M, OS, LVs, InstrHandle),
+   	jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+	NewEE = env(C, M, OS, LVs, NewInstrHandle).
 
 typed_instr(i2l, state([EE|EEs],CT),Out, state( [NewEE|EEs],CT)) :-
 	EE = env(C, M, OS, LVs, InstrHandle),
@@ -648,6 +669,25 @@ branch_instr(if_icmpeq, state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)):
 
 
 	
+% ------------ if_icmpeg
+branch_instr('if_icmpge', state([EE|EEs],CT),Out, state([PosEE,NegEE|EEs],NewCT)):-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O1,O2|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+    writeln('True if_icmpge branch'),
+    jpl_call(InstrHandle,getTarget,[],PosInstrHandle),	
+	PosEE = env(C, M, OS1, LVs, PosInstrHandle),
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O1,O2|OS1] ; (OS = [], OS1 = [])),
+    jpl_call(InstrHandle,toString,[@false],IHToString),
+    format('Branch on ~w~n',[IHToString]),
+	format(Out,'False if_icmpeq branch, [O1,O2] = [~w,~w]~n',[O1,O2]),
+	jpl_call(InstrHandle, getNext, [], NegInstrHandle),
+	NegEE = env(C, M, OS1, LVs, NegInstrHandle).
+
+
+
 
 call_idivision(state([EE|EEs],CT),Out,state([NewEE|EEs],CT)) :-
 EE = env(C,M,OS,LVs,InstrHandle),
