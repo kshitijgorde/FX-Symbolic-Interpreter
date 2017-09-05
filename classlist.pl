@@ -15235,7 +15235,7 @@ trusted_class('java.util.Calendar').
 trusted_class('java.text.DateFormat$Field').
 trusted_class('java.text.DateFormat').
 trusted_class('java.text.SimpleDateFormat').
-trusted_class('java.net.URLConnection$1').
+%trusted_class('java.net.URLConnection$1').
 trusted_class('sun.net.www.MimeEntry').
 trusted_class('sun.net.www.MimeTable$2').
 trusted_class('sun.net.www.MimeTable$1').
@@ -16682,6 +16682,7 @@ trusted_class('sun.net.www.MessageHeader').
 trusted_class('java.net.ContentHandler').
 trusted_class('java.net.UnknownContentHandler').
 trusted_class('java.net.URLConnection').
+%trusted_class('java.net.URL').
 trusted_class('sun.net.www.URLConnection').
 trusted_class('sun.net.www.protocol.file.FileURLConnection').
 trusted_class('java.security.PermissionCollection').

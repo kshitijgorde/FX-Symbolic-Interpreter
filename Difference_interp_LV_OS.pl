@@ -4,7 +4,7 @@
 :- use_module(library(assoc)).
 
 process_classes([]).
-process_classes([C2,C|CList]) :-	
+process_classes([C|CList]) :-	
 	jpl_call('mcparser.instr.InstructionInfo',getClassGen,[C],CGen),		%Cgen is a datastructure from bcel that holds class related info.
 	open('Symbolic.txt',write,Out),
 	format(Out,'The ClassGen is: ~w~n',CGen),
@@ -45,11 +45,75 @@ process_classes([C2,C|CList]) :-
     %jpl_array_to_list(MLVArray, MLVList),
     %list_to_indexed_assoc(MLVList, MLocalVars),
 	%write(MLocalVars),
+	open('c:/Users/kshit/Desktop/FX Symbolic Interpreter/Policies.txt',read,Stream),
+	read(Stream,Policy1),
+	close(Stream),
+	write(Policy1),
 	S = state([env(CGen,MGen1,OperandStack,LocalVars,IH)],[]),	%The first instruction handle will give you the next one. Hence only the first required
-	instr(S,Out,NewState).
+	verify_inductive(S,Out,Policy1). %Pass formula F
+	%instr(S,Out,NewState).
 	%process_methods_in_class(MGenList).
 	%process_classes(CList).
-	
+
+
+read_file(Stream,[]) :-
+    at_end_of_stream(Stream).
+
+read_file(Stream,[X|L]) :-
+    \+ at_end_of_stream(Stream),
+    read(Stream,X),
+    read_file(Stream,L).
+
+
+verify_inductive(S,Out,and(X,Y)) :- 
+% We're verifying that when A= java.net.URL.OpenConnection then we should not allow B=java.lang.Runtime.exec in future
+format('Processing Formula'),
+verify_inductive(S,Out,X),
+\+verify_inductive(S,Out,Y).
+
+
+verify_inductive(state([EE|EEs],CTriple),Out,exec) :-
+
+EE = env(C,M,OS,LVs,InstrHandle),
+format(Out,'Processing in exec',[InstrHandle]),
+jpl_call(InstrHandle,toString,[],SInstrHandle),
+format(Out,'Printing Instr:~w~n',[SInstrHandle]),
+jpl_call('mcparser.instr.InstructionInfo',getInstrType,[InstrHandle],InstrType),
+format(Out,'Printing C:~w~n',[C]),
+format(Out,'Printing M:~w~n',[M]),
+format(Out,'Printing InstrTYPE from EXEC VERIFY:~w~n',[InstrType]),
+(InstrType == invoke -> jpl_call('mcparser.instr.InstructionInfo', getInvokeData, [C,M,InstrHandle], InvokeData), 
+	jpl_get(InvokeData,methodName,Mname),format(Out,'Priting method name(from exec):~w~n',[Mname]), (Mname==exec -> format(Out,'POLICY VIOLATION!!exec detected..~n~w',[Mname]));false).
+
+
+verify_inductive(state([EE|EEs],CTriple),Out,openConnection):-
+format('~nIn open connection verify'),
+EE = env(C,M,OS,LVs,InstrHandle),
+jpl_call(InstrHandle,toString,[],SInstrHandle),
+format(Out,'Printing Instr:~w~n',[SInstrHandle]),
+jpl_call('mcparser.instr.InstructionInfo',getInstrType,[InstrHandle],InstrType),
+format(Out,'Printing C:~w~n',[C]),
+format(Out,'Printing M:~w~n',[M]),
+format(Out,'Printing InstrTYPE VERIFY:~w~n',[InstrType]),
+
+(InstrType == invoke -> jpl_call('mcparser.instr.InstructionInfo', getInvokeData, [C,M,InstrHandle], InvokeData), 
+	jpl_get(InvokeData,methodName,Mname),format(Out,'Priting method name:~w~n',[Mname]),(Mname==openConnection -> format(Out,'openConnection detected..~n~w',[Mname]));false).
+
+verify_inductive(S,Out,not(B)) :-
+format('~nIn not(B)'),
+format(Out,'B is :::~w~n',[B]),
+\+verify_inductive(S,Out,B).
+
+verify_inductive(S,Out,f(B)) :-
+format('~nIn future event'),
+(verify_inductive(S,Out,B) ; verify_inductive(S,Out,x(f(B)))).
+
+verify_inductive(S,Out,x(B)):-
+format('~nIn Next event'),
+instr(S,Out,NextState),
+verify_inductive(NextState,Out,B).
+
+
 instr(state([EE|_EEs],CTriple),Out, NewState) :-
     % Stop if we're at a null instruction handle
 	EE = env(_C, _M, _OS, _LVs, InstrHandle),
@@ -75,8 +139,8 @@ instr(state([EE|EEs],CTriple),Out, NewState) :-
     
     jpl_call(InstrHandle,toString,[@false],IHToString),
 	format(Out,'OS=~w,LVs=~w,InstrHandle=~s~n~n, Type ~w~n',[OS,LVs,IHToString,InstrType]),
-    help_instr(InstrType,state([EE|EEs],CTriple),Out,NextState),
-    instr(NextState,Out,NewState).
+    help_instr(InstrType,state([EE|EEs],CTriple),Out,NewState).
+    %instr(NextState,Out,NewState).
     
 
 
@@ -122,7 +186,15 @@ help_instr(invoke, state([EE|EEs],CT),Out, state(ReturnEEs, CT)) :-
 
 %\+(cat(X)) is the same as not(cat(X))
 EE = env(C,M,OS, LVs, InstrHandle),
-jpl_call('mcparser.instr.InstructionInfo', getInvokeDataLite, [C,M,InstrHandle], InvokeData),
+jpl_call(C,getClassName,[],KC),
+jpl_call(M,getMethod,[],KM),
+jpl_call(KM,toString,[],KMn),
+jpl_call(InstrHandle,toString,[],ITR),
+
+format(Out,'C is:~w~n',[KC]),
+format(Out,'M is:~w~n',[KMn]),
+format(Out,'Itr is:~w~n',[ITR]),
+jpl_call('mcparser.instr.InstructionInfo', getInvokeData, [C,M,InstrHandle], InvokeData),
 jpl_get(InvokeData, className, NewClassName),
 trusted_class(NewClassName),
 jpl_call(InstrHandle, getInstruction, [], Instr),
@@ -157,7 +229,17 @@ write(Out,'Processing Trusted Classes for Invoke Instruction'),
 write(Out,'invoke, trusted case'),
 format(Out,'ClassName = ~w~n', NewClassName),
 format(Out,'MethodName = ~w~n', [MethodName]),
-% This is a trusted class...No we need not invoke it's method. Just populate ReturnEE as the next state.
+ %% (MethodName=='openConnection' -> jpl_get(InvokeData,cgen,CkGen),jpl_get(InvokeData,mgen,MkGen),
+ %% 	%Add this classgen and method gen to return EE
+ %% 	jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+ %% 	ReturnEE = env(CkGen,MkGen,UpdatedOS,LVs,NewInstrHandle),
+ %% 	ReturnEEs = [ReturnEE|EEs]
+ %% 	;
+
+	%% % This is a trusted class...No we need not invoke it's method. Just populate ReturnEE as the next state.
+	%% jpl_call(InstrHandle,getNext,[],NextInstructionHandle),
+	%% ReturnEE = env(C,M,UpdatedOS,LVs,NextInstructionHandle),
+	%% ReturnEEs = [ReturnEE|EEs]).
 jpl_call(InstrHandle,getNext,[],NextInstructionHandle),
 ReturnEE = env(C,M,UpdatedOS,LVs,NextInstructionHandle),
 ReturnEEs = [ReturnEE|EEs].
@@ -203,7 +285,6 @@ jpl_call(NextInstructionHandle,toString,[],String_InstrHandleNext),
 format(Out,'Next Instruction is:~w~n',String_InstrHandleNext),
 ReturnEE = env(C,M,NewOS,LVs,NextInstructionHandle),
 
-%To populate a NewMethodEE, get new LocalVars, convert to prolog list, and index assoc.
 jpl_get(InvokeData, cgen, NewClassGen),
 jpl_get(InvokeData, mgen, NewMethodGen),
 jpl_call(NewMethodGen,getLocalVariables,[],LVArray),
@@ -436,7 +517,6 @@ typed_instr(isub, state([EE|EEs],CT),Out, state( [NewEE|EEs],CT)) :-
     ((number(O1),number(O2)) -> Result is Result1 ; Result = Result1),
     jpl_call(InstrHandle,getNext,[],NewInstrHandle),
 	NewEE = env(C, M, [Result|OS1], LVs, NewInstrHandle).
-
 
 default_instr(arraylength, state([EE|EEs],CT), Out,state( [NewEE|EEs],CT)) :-
     % Currently we don't really reason about arrays...

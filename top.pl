@@ -9,7 +9,7 @@
 set_breakpoints :- 
 	spy(help_instr).
 
-jar_to_load('c:/Users/kshit/Desktop/Applets/5.jar').
+jar_to_load('c:/Users/kshit/Desktop/Applets/4.jar').
 fxp(JarProcessor) :-
 	%write(X),
 	%write("Hello"),
