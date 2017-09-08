@@ -45,13 +45,13 @@ process_classes([C|CList]) :-
     %jpl_array_to_list(MLVArray, MLVList),
     %list_to_indexed_assoc(MLVList, MLocalVars),
 	%write(MLocalVars),
-	open('c:/Users/kshit/Desktop/FX Symbolic Interpreter/Policies.txt',read,Stream),
-	read(Stream,Policy1),
-	close(Stream),
-	write(Policy1),
+	%% open('c:/Users/kshit/Desktop/FX Symbolic Interpreter/Policies.txt',read,Stream),
+	%% read(Stream,Policy1),
+	%% close(Stream),
+	%% write(Policy1),
 	S = state([env(CGen,MGen1,OperandStack,LocalVars,IH)],[]),	%The first instruction handle will give you the next one. Hence only the first required
-	verify_inductive(S,Out,Policy1). %Pass formula F
-	%instr(S,Out,NewState).
+	%verify_inductive(S,Out,Policy1). %Pass formula F
+	instr(S,Out,NewState).
 	%process_methods_in_class(MGenList).
 	%process_classes(CList).
 
@@ -139,8 +139,8 @@ instr(state([EE|EEs],CTriple),Out, NewState) :-
     
     jpl_call(InstrHandle,toString,[@false],IHToString),
 	format(Out,'OS=~w,LVs=~w,InstrHandle=~s~n~n, Type ~w~n',[OS,LVs,IHToString,InstrType]),
-    help_instr(InstrType,state([EE|EEs],CTriple),Out,NewState).
-    %instr(NextState,Out,NewState).
+    help_instr(InstrType,state([EE|EEs],CTriple),Out,NextState),
+    instr(NextState,Out,NewState).
     
 
 
@@ -365,7 +365,13 @@ local_instr(iinc,state([EE|EEs],CT),Out,state([NewEE|EEs],CT)) :-
     jpl_call(InstrHandle,getNext,[],NewInstrHandle),
     NewEE = env(C, M, OS, NewLVs, NewInstrHandle).
 
-
+typed_instr(imul, state([EE|EEs],CT),Out, state( [NewEE|EEs],CT)) :-
+	EE = env(C, M, OS, LVs, InstrHandle),
+    (OS = [O1,O2|OS1] ; (OS = [], OS1 = [])),
+	Result1 = O2 * O1,
+    ((number(O1),number(O2)) -> Result is Result1 ; Result = Result1),
+    jpl_call(InstrHandle,getNext,[],NewInstrHandle),
+	NewEE = env(C, M, [Result|OS1], LVs, NewInstrHandle).
 
 % In case of normal returns, simply pop the callee execution env
 return_instr(return, state([_CalleeEE,CallerEE|EEs],CT),Out, state([NewCallerEE|EEs],CT)) :-
